@@ -14,6 +14,6 @@ interim_data_dir = project_dir / 'data' / 'interim'
 processed_data_dir = project_dir / 'data' / 'processed'
 
 # LINK TO RAW DATA SOURCE
-data_source = {'name': 'example.csv',
-               'url': '',
-               'meta_data_url': ''}
+data_source = {'name': 'predictive_maintenance_dataset.csv',
+            'url': 'https://archive.ics.uci.edu/ml/machine-learning-databases/00601/ai4i2020.csv',
+            'meta_data_url': 'https://archive.ics.uci.edu/ml/datasets/AI4I+2020+Predictive+Maintenance+Dataset'}

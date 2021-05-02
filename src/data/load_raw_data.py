@@ -9,9 +9,8 @@ def main(input_url, output_filepath):
     Loads raw csv file from url specified in globals.py
     Loaded file is stored in data directory
     """
-    #df = pd.read_csv(input_url)
-    #df.to_csv(output_filepath, index=False, encoding='utf8')
-    pass
+    df = pd.read_csv(input_url)
+    df.to_csv(output_filepath, index=False, encoding='utf8')
     
 
 if __name__ == '__main__':
