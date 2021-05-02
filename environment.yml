@@ -1,0 +1,11 @@
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python-dotenv[version='>=0.5.1']
+  - matplotlib
+  - python[version='>=3.7']
+  - pandas>=1
+  - numpy
+  - tensorflow-gpu
+
