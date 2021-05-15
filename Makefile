@@ -14,3 +14,20 @@ create_env:
 # install code from src folder so that `import from src.<module>` will work
 	@echo "Installing src package..."
 	@($(CONDA_ACTIVATE) $(PROJECT_NAME); python setup.py develop)
+
+get_sbg_data:
+# metadata: https://www.data.gv.at/katalog/dataset/meteorologische-daten-des-salzburger-luftgutemessnetzes-jahresdateien
+	@echo "Loading raw sbg weather data..."
+	@for year in 2016 2017 2018 2019 ; do \
+	wget -O $(PROJECT_DIR)/data/raw/meteo-$$year.zip https://www.salzburg.gv.at/ogd/805314f6-5b72-4c2a-aa22-e1ece6d85db5/meteo-$$year.zip ; \
+	unzip -o $(PROJECT_DIR)/data/raw/meteo-$$year.zip -d $(PROJECT_DIR)/data/raw/ ; \
+	done
+
+	@rm $(PROJECT_DIR)/data/raw/*.zip
+	@echo "Successfully loaded and unzipped SBG weather data"
+
+
+get_pred_maint_data:
+# metadata: https://archive.ics.uci.edu/ml/datasets/AI4I+2020+Predictive+Maintenance+Dataset
+	@echo "Loading raw predicitve maintenance data..."
+	@wget -O $(PROJECT_DIR)/data/raw/predictive_maintenance_dataset.csv https://archive.ics.uci.edu/ml/machine-learning-databases/00601/ai4i2020.csv

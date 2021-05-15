@@ -5,7 +5,7 @@ dependencies:
   - python-dotenv[version='>=0.5.1']
   - matplotlib
   - python[version='>=3.7']
-  - pandas>=1
-  - numpy
-  - tensorflow-gpu
-
+  - pandas=1.2.4
+  - numpy=1.20.1
+  - tensorflow-gpu=2.4.1
+  - sklearn=0.24.1

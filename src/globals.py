@@ -12,8 +12,3 @@ project_dir = Path(__file__).resolve().parents[1]
 raw_data_dir = project_dir / 'data' / 'raw'
 interim_data_dir = project_dir / 'data' / 'interim'
 processed_data_dir = project_dir / 'data' / 'processed'
-
-# LINK TO RAW DATA SOURCE
-data_source = {'name': 'predictive_maintenance_dataset.csv',
-            'url': 'https://archive.ics.uci.edu/ml/machine-learning-databases/00601/ai4i2020.csv',
-            'meta_data_url': 'https://archive.ics.uci.edu/ml/datasets/AI4I+2020+Predictive+Maintenance+Dataset'}
