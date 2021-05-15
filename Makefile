@@ -9,6 +9,7 @@ CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activ
 
 create_env:
 # create conda env from environemt.yml file
+# environment will be named same as the project folder
 	@echo "Creating conda environment for $(PROJECT_NAME)..."
 	@conda env create -n $(PROJECT_NAME) -f environment.yml
 # install code from src folder so that `import from src.<module>` will work

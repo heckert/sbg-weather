@@ -1,4 +1,4 @@
-Salzburg weather data
+Salzburg Weather Data
 ==============================
 
 Exploring various time-series deep learning methods on weather data for the city of Salzburg, Austria.
