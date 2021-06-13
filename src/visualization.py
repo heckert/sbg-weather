@@ -6,7 +6,7 @@ def plot_metrics(df, metrics=None, selected_slice=None, figsize=(14,10)):
 
     Params
     ----
-    df: pandas dataframe containing multiple time series
+    df: pandas dataframe containing ordered, multivariate timeseries
     metrics: a list containing the metrics to be visualized
     selected_slice: how many subsequent observations to plot
     figsize: size of the plot
