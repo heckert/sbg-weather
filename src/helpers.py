@@ -133,6 +133,8 @@ class WindowGenerator():
 
     @property
     def train(self):
+        
+
         return self.make_dataset(self.train_df)
 
     @property

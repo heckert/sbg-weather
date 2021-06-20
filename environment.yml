@@ -4,8 +4,12 @@ channels:
 dependencies:
   - python-dotenv[version='>=0.5.1']
   - matplotlib
-  - python[version='>=3.7']
+  - python[version='>=3.9']
   - pandas=1.2.4
   - numpy=1.20.1
   - tensorflow-gpu=2.4.1
   - scikit-learn=0.24.1
+  - nbconvert=6.0.7
+  - pip
+  - pip:
+      - -e .

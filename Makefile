@@ -12,10 +12,6 @@ create_env:
 # environment will be named same as the project folder
 	@echo "Creating conda environment for $(PROJECT_NAME)..."
 	@conda env create -n $(PROJECT_NAME) -f environment.yml
-# install src package in development mode
-# so that `import from src.<module>` will work
-	@echo "Installing src package..."
-	@($(CONDA_ACTIVATE) $(PROJECT_NAME); pip install -e .)
 
 get_sbg_data:
 # metadata: https://www.data.gv.at/katalog/dataset/meteorologische-daten-des-salzburger-luftgutemessnetzes-jahresdateien
