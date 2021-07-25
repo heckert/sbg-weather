@@ -1,43 +1,50 @@
 import os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
-def get_filenames_in_directory(directory):
+def get_filenames_in_directory(path):
     f = []
-    for (dirpath, dirnames, filenames) in os.walk(directory):
+    for (_, _, filenames) in os.walk(path):
         f.extend(filenames)
         break
-    return f
 
-class WindowGenerator():
-    """
-    Taken & adjusted from https://www.tensorflow.org/tutorials/structured_data/time_series
-    """
-    def __init__(self, input_width, label_width, shift,
-            train_df=None, val_df=None, test_df=None,
-            label_columns=None, embedding_column=None):
+    return f 
 
-        # Store the raw data.
-        self.train_df = train_df
-        self.val_df = val_df
-        self.test_df = test_df
+class WindowGenerator:
+    '''
+    Adapted from https://www.tensorflow.org/tutorials/structured_data/time_series
+    '''
+
+    def __init__(self, input_width=24, label_width=6, shift=6,
+                 train_dir=None, val_dir=None, test_dir=None,
+                 label_columns=['Lufttemperatur [GradC]'],
+                 embedding_column='Location'):
+
+        # Read columns from first file in train_dir.
+        self.train_files = get_filenames_in_directory(train_dir)
+
+        with open(train_dir/self.train_files[0]) as f:
+            self.columns = f.readline() \
+                            .strip() \
+                            .split(',')
 
         # Work out the label column indices.
         self.label_columns = label_columns
         if label_columns is not None:
             self.label_columns_indices = {name: i for i, name in
-                                        enumerate(label_columns)}
+                                            enumerate(label_columns)}
+            self.column_indices = {name: i for i, name in
+                                enumerate(self.columns)}
 
-        self.columns = list(train_df.columns)
-        self.column_indices = {name: i for i, name in
-                                enumerate(train_df.columns)}
-
-        # Work out the embedding index.
         self.embedding_column = embedding_column
         if embedding_column is not None:
-            self.embedding_column_index = self.column_indices.pop(embedding_column)
-            self.embedding_column = self.columns.pop(self.embedding_column_index)
+            self.embedding_index = self.columns.index(embedding_column)
+
+        print(self.column_indices)
+        print(self.columns)
+        print(self.embedding_index, ': ', self.embedding_column)
 
         # Work out the window parameters.
         self.input_width = input_width
@@ -60,98 +67,58 @@ class WindowGenerator():
             f'Label indices: {self.label_indices}',
             f'Label column name(s): {self.label_columns}'])
 
-    @tf.autograph.experimental.do_not_convert
-    def split_window(self, features):
-        inputs = features[:, self.input_slice, :]
-        labels = features[:, self.labels_slice, :]
+    def _path2pattern(self, path):
+        return str(path) + '/*.csv'
+
+    def _preprocess(self, line):
+        defs = [0.] * len(self.columns)
+        fields = tf.io.decode_csv(line, record_defaults=defs)
+        line = tf.stack(fields)
+        return line
+
+    def _create_window(self, window):
+        return window.batch(self.total_window_size)
+
+    def _split_xy(self, features):
+        inputs = features[self.input_slice, :]
+        labels = features[self.labels_slice, :]
         if self.label_columns is not None:
             labels = tf.stack(
-                [labels[:, :, self.column_indices[name]] for name in self.label_columns],
+                [labels[:, self.column_indices[name]] for name in self.label_columns],
                 axis=-1)
 
-        if self.embedding_column is not None:
-            embedding_inputs = features[:, self.input_slice, self.embedding_column_index]
-            #embedding_inputs = tf.expand_dims(embedding_inputs, axis=-1)
-            inputs = tf.stack(
-                [inputs[:, :, self.column_indices[name]] for name in self.columns],
-                axis=-1)
+        if self.embedding_index is not None:
+            embeddings = inputs[:,self.embedding_index]
+            inputs = inputs[:, :self.embedding_index]
+
+            return (inputs, embeddings), labels
 
         # Slicing doesn't preserve static shape information, so set the shapes
         # manually. This way the `tf.data.Datasets` are easier to inspect.
-        inputs.set_shape([None, self.input_width, None])
-        embedding_inputs.set_shape([None, self.input_width])
-        labels.set_shape([None, self.label_width, None])
+        # inputs.set_shape([self.input_width, None])
+        # labels.set_shape([self.label_width, None])
 
-        return (inputs, embedding_inputs), labels
+        return inputs, labels
 
-    def plot(self, model=None, plot_col='Lufttemperatur [GradC]', max_subplots=3):
-        (inputs, embeddings), labels = self.example
-        plt.figure(figsize=(12, 8))
-        plot_col_index = self.column_indices[plot_col]
-        max_n = min(max_subplots, len(inputs))
-        for n in range(max_n):
-            plt.subplot(max_n, 1, n+1)
-            plt.ylabel(f'{plot_col}\n[normed]')
-            plt.plot(self.input_indices, inputs[n, :, plot_col_index],
-                    label='Inputs', marker='.', zorder=-10)
 
-            if self.label_columns:
-                label_col_index = self.label_columns_indices.get(plot_col, None)
-            else:
-                label_col_index = plot_col_index
+    def csv_reader(self, dir_):
+        pattern = self._path2pattern(dir_)
+        files = tf.data.Dataset.list_files(pattern, shuffle=False)
 
-            if label_col_index is None:
-                continue
+        dataset = files.flat_map(lambda file: 
+            tf.data.TextLineDataset(file).skip(1) \
+                .map(self._preprocess) \
+                .window(self.total_window_size, shift=1, drop_remainder=True) \
+                .flat_map(self._create_window) \
+                .map(self._split_xy)
 
-            plt.scatter(self.label_indices, labels[n, :, label_col_index],
-                        edgecolors='k', label='Labels', c='#2ca02c', s=64)
+        # TODO:
+        # Batching
+        # Prefetching
 
-            if model is not None:
-                predictions = model(inputs)
-                plt.scatter(self.label_indices, predictions[n, :, label_col_index],
-                            marker='X', edgecolors='k', label='Predictions',
-                            c='#ff7f0e', s=64)
+                
+        )
 
-            if n == 0:
-                plt.legend()
+        return dataset
 
-        plt.xlabel('Time [h]')
-
-    def make_dataset(self, data):
-        data = np.array(data, dtype=np.float32)
-        ds = tf.keras.preprocessing.timeseries_dataset_from_array(
-            data=data,
-            targets=None,
-            sequence_length=self.total_window_size,
-            sequence_stride=1,
-            shuffle=True,
-            batch_size=32,)
-
-        ds = ds.map(self.split_window)
-
-        return ds
-
-    @property
-    def train(self):
-        
-
-        return self.make_dataset(self.train_df)
-
-    @property
-    def val(self):
-        return self.make_dataset(self.val_df)
-
-    @property
-    def test(self):
-        return self.make_dataset(self.test_df)
-
-    @property
-    def example(self):
-        """Get and cache an example batch of `inputs, labels` for plotting."""
-        result = getattr(self, '_example', None)
-        if result is None:
-            # No example batch was found, so get one from the `.train` dataset
-            result = next(iter(self.train))
-            # And cache it for next time
-            self._example = result
-        return result
+  

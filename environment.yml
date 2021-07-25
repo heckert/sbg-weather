@@ -2,14 +2,15 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python-dotenv[version='>=0.5.1']
   - matplotlib
-  - python[version='>=3.9']
+  - python[version='3.9']
   - pandas=1.2.4
   - numpy=1.20.1
   - tensorflow-gpu=2.4.1
   - scikit-learn=0.24.1
   - nbconvert=6.0.7
+  - gast=0.3.3
+  - ipykernel=5.3.4
   - pip
   - pip:
       - -e .
