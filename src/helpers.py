@@ -115,7 +115,6 @@ class WindowGenerator:
         # TODO:
         # Batching
         # Prefetching
-
                 
         )
 
