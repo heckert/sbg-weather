@@ -42,10 +42,6 @@ class WindowGenerator:
         if embedding_column is not None:
             self.embedding_index = self.columns.index(embedding_column)
 
-        print(self.column_indices)
-        print(self.columns)
-        print(self.embedding_index, ': ', self.embedding_column)
-
         # Work out the window parameters.
         self.input_width = input_width
         self.label_width = label_width
