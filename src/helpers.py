@@ -17,10 +17,16 @@ class WindowGenerator:
     Adapted from https://www.tensorflow.org/tutorials/structured_data/time_series
     '''
 
-    def __init__(self, input_width=24, label_width=6, shift=6,
+    def __init__(self, input_width=24, label_width=6, shift=None,
                  train_dir=None, val_dir=None, test_dir=None,
+                 batch_size=32,
                  label_columns=['Lufttemperatur [GradC]'],
                  embedding_column='Location'):
+
+        # Store data dirs.
+        self.train_dir = train_dir
+        self.val_dir = val_dir
+        self.test_dir = test_dir
 
         # Read columns from first file in train_dir.
         self.train_files = get_filenames_in_directory(train_dir)
@@ -38,13 +44,18 @@ class WindowGenerator:
             self.column_indices = {name: i for i, name in
                                 enumerate(self.columns)}
 
+        # Work out embedding column index, if available.
         self.embedding_column = embedding_column
         if embedding_column is not None:
             self.embedding_index = self.columns.index(embedding_column)
 
+        self.batch_size = batch_size
+
         # Work out the window parameters.
         self.input_width = input_width
         self.label_width = label_width
+        if shift is None:
+            shift = label_width
         self.shift = shift
 
         self.total_window_size = input_width + shift
@@ -97,7 +108,7 @@ class WindowGenerator:
         return inputs, labels
 
 
-    def csv_reader(self, dir_):
+    def make_dataset(self, dir_):
         pattern = self._path2pattern(dir_)
         files = tf.data.Dataset.list_files(pattern, shuffle=False)
 
@@ -106,14 +117,24 @@ class WindowGenerator:
                 .map(self._preprocess) \
                 .window(self.total_window_size, shift=1, drop_remainder=True) \
                 .flat_map(self._create_window) \
-                .map(self._split_xy)
-
-        # TODO:
-        # Batching
-        # Prefetching
-                
+                .map(self._split_xy) \
+                .batch(self.batch_size) \
+                .prefetch(1)
         )
 
         return dataset
+
+    @property
+    def train(self):
+        return self.make_dataset(self.train_dir)
+
+    @property
+    def val(self):
+        return self.make_dataset(self.val_dir)
+
+    @property
+    def test(self):
+        return self.make_dataset(self.test_dir)
+
 
   
