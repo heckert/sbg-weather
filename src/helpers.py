@@ -111,15 +111,19 @@ class WindowGenerator:
         pattern = self._path2pattern(dir_)
         files = tf.data.Dataset.list_files(pattern, shuffle=False)
 
+        # Interleave windows generated from different files.
         dataset = files.interleave(lambda file: \
             tf.data.TextLineDataset(file).skip(1) \
                 .map(self._preprocess) \
                 .window(self.total_window_size, shift=1, drop_remainder=True) \
                 .flat_map(self._create_window) \
-                .map(self._split_xy) \
-                .batch(self.batch_size) \
-                .prefetch(1),
+                .map(self._split_xy),
             num_parallel_calls=tf.data.AUTOTUNE)
+
+        # Shuffle, batch and prefetch the data
+        dataset = dataset.shuffle(300) \
+            .batch(self.batch_size) \
+            .prefetch(tf.data.AUTOTUNE)
 
         return dataset
 
