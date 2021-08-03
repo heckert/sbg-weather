@@ -7,13 +7,13 @@ PROJECT_NAME=$(shell basename $(PROJECT_DIR))
 SHELL=/bin/bash
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
-create_env:
+environment:
 # create conda env from environemt.yml file
 # environment will be named same as the project folder
 	@echo "Creating conda environment for $(PROJECT_NAME)..."
 	@conda env create -n $(PROJECT_NAME) -f environment.yml
 
-get_sbg_data:
+sbg_data:
 # metadata: https://www.data.gv.at/katalog/dataset/meteorologische-daten-des-salzburger-luftgutemessnetzes-jahresdateien
 	@echo "Loading raw sbg weather data..."
 	@for year in 2016 2017 2018 2019 ; do \
@@ -25,7 +25,7 @@ get_sbg_data:
 	@echo "Successfully loaded and unzipped SBG weather data"
 
 
-get_pred_maint_data:
+pred_maint_data:
 # metadata: https://archive.ics.uci.edu/ml/datasets/AI4I+2020+Predictive+Maintenance+Dataset
 	@echo "Loading raw predicitve maintenance data..."
 	@wget -O $(PROJECT_DIR)/data/raw/predictive_maintenance_dataset.csv https://archive.ics.uci.edu/ml/machine-learning-databases/00601/ai4i2020.csv

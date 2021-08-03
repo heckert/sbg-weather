@@ -13,18 +13,19 @@ Data preparation and feature engineering leans – quite heavily at times – on
 ### 1. Create conda environment  
 This project assumes that a conda installation is available.  
 
-    make create_env
+    make environment
 
  will create a conda environment with all required packages and by default name it after the project directory (_sbg-weather_).
 
 ### 2. Load the data
-    make get_sbg_data
+    make sbg_data
+    
 loads datasets for the years 2016-2019 to `data/raw`.
 
 ### 3. Data preparation and feature engineering
 
 This is currently handled in the notebook `01-explore&prep.ipynb` in the notebooks directory. The raw data is loaded, processed and eventually stored across several csv files.
-The files are written seperate `train`, `val` and `test` folders within `data/processed`.
+The files are written to seperate `train`, `val` and `test` folders within `data/processed`.
 
 ### 4. Model training
 A first example of training an LSTM model is provided in the notebook `02-train.ipynb`.

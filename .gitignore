@@ -94,3 +94,8 @@ target/
 
 # zip files
 *.zip
+
+# keras saved model components
+assets
+variables
+*.pb

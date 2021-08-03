@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def plot_metrics(df, metrics=None, selected_slice=None, figsize=(14,10)):
+def plot_metrics(df, metrics=None, selected_slice=None, figsize=(10,7)):
     '''
     Plot time series metrics
 
