@@ -55,9 +55,9 @@ class SplitScaler:
 
     def plot(self):
         fig, ax = plt.subplots(figsize=(10,2))
-        d_range = pd.date_range('2016-01-01', '2019-12-31')
+        d_range = pd.date_range('2011-01-01', '2019-12-31')
 
-        data = self.df.loc['Zell am See - Eishalle']
+        data = self.df.loc['St.Johann - Bezirkshauptmannschaft']
 
         data.loc[self.train_slice, 'Lufttemperatur [GradC]'].plot(ax=ax, color='tab:blue', label='Train')
         data.loc[self.val_slice, 'Lufttemperatur [GradC]'].plot(ax=ax, color='tab:orange', label='Validation')
@@ -133,6 +133,8 @@ class WindowGenerator:
         self.embedding_column = embedding_column
         if embedding_column is not None:
             self.embedding_index = self.columns.index(embedding_column)
+        else:
+            self.embedding_index = None
 
         self.batch_size = batch_size
 
@@ -185,11 +187,6 @@ class WindowGenerator:
 
             return (inputs, embeddings), labels
 
-        # Slicing doesn't preserve static shape information, so set the shapes
-        # manually. This way the `tf.data.Datasets` are easier to inspect.
-        # inputs.set_shape([self.input_width, None])
-        # labels.set_shape([self.label_width, None])
-
         return inputs, labels
 
     def make_dataset(self, dir_):
@@ -200,26 +197,33 @@ class WindowGenerator:
         dataset = files.interleave(lambda file: \
             tf.data.TextLineDataset(file).skip(1) \
                 .map(self._preprocess) \
-                .window(self.total_window_size, shift=1, drop_remainder=True) \
+                .window(self.total_window_size, shift=int(self.total_window_size/2), drop_remainder=True) \
                 .flat_map(self._create_window) \
-                .map(self._split_xy),
-            num_parallel_calls=tf.data.AUTOTUNE)
+                .map(self._split_xy) \
+                .shuffle(200) \
+                .batch(self.batch_size) \
+                .prefetch(tf.data.AUTOTUNE),
+            num_parallel_calls=1)
 
         # Shuffle before batching
-        dataset = dataset.shuffle(300) \
-            .batch(self.batch_size) \
-            .prefetch(tf.data.AUTOTUNE)
+        #dataset = dataset.shuffle(300) \
+        #    .batch(self.batch_size) \
+        #    .prefetch(tf.data.AUTOTUNE)
 
         return dataset
 
-    def plot(self, model=None, plot_col='Lufttemperatur [GradC]', max_subplots=3):
-        (inputs, embeddings), labels = self.example
+    def plot(self, model=None, max_subplots=3):
+        plot_col = self.label_columns[0]
+        if self.embedding_column is not None:
+            (inputs, embeddings), labels = self.example
+        else:
+            inputs, labels = self.example
         plt.figure(figsize=(12, 8))
         plot_col_index = self.column_indices[plot_col]
         max_n = min(max_subplots, len(inputs))
         for n in range(max_n):
             plt.subplot(max_n, 1, n+1)
-            plt.ylabel(f'Temp [normed]')
+            plt.ylabel(plot_col)
             plt.plot(self.input_indices, inputs[n, :, plot_col_index],
                     label='Inputs', marker='.', zorder=-10)
 
@@ -231,10 +235,13 @@ class WindowGenerator:
             if label_col_index is None:
                 continue
 
-            plt.scatter(self.label_indices, labels[n, :, label_col_index],
-                        edgecolors='k', label='Labels', c='#2ca02c', s=64)
+            plt.plot(self.label_indices, labels[n, :, label_col_index],
+                     label='Labels', c='#2ca02c')
             if model is not None:
-                predictions = model((inputs, embeddings))
+                if self.embedding_column is not None:
+                    predictions = model((inputs, embeddings))
+                else:
+                    predictions = model(inputs)
                 plt.scatter(self.label_indices, predictions[n, :, label_col_index],
                             marker='X', edgecolors='k', label='Predictions',
                             c='#ff7f0e', s=64)
@@ -259,10 +266,10 @@ class WindowGenerator:
     @property
     def example(self):
         """Get and cache an example batch of `inputs, labels` for plotting."""
-        #result = getattr(self, '_example', None)
-        #if result is None:
+        result = getattr(self, '_example', None)
+        if result is None:
             # No example batch was found, so get one from the `.test` dataset
-        result = next(iter(self.test))
+            result = next(iter(self.test))
         # And cache it for next time
         # self._example = result
         return result

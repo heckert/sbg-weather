@@ -16,13 +16,24 @@ environment:
 sbg_data:
 # metadata: https://www.data.gv.at/katalog/dataset/meteorologische-daten-des-salzburger-luftgutemessnetzes-jahresdateien
 	@echo "Loading raw sbg weather data..."
-	@for year in 2016 2017 2018 2019 ; do \
+	@for year in {2011..2019} ; do \
 	wget -O $(PROJECT_DIR)/data/raw/meteo-$$year.zip https://www.salzburg.gv.at/ogd/805314f6-5b72-4c2a-aa22-e1ece6d85db5/meteo-$$year.zip ; \
 	unzip -o $(PROJECT_DIR)/data/raw/meteo-$$year.zip -d $(PROJECT_DIR)/data/raw/ ; \
 	done
 
 	@rm $(PROJECT_DIR)/data/raw/*.zip
 	@echo "Successfully loaded and unzipped SBG weather data"
+
+	@echo "Concatenating files for 2011-13"
+	@for year in {2011..2013} ; do \
+	touch $(PROJECT_DIR)/data/raw/meteo-$$year.csv; \
+	for part in 1 2 ; do \
+	cat $(PROJECT_DIR)/data/raw/meteo-$$year-$$part.csv >>  $(PROJECT_DIR)/data/raw/meteo-$$year.csv ; \
+	rm $(PROJECT_DIR)/data/raw/meteo-$$year-$$part.csv ; \
+	done; done
+
+	@echo "Renaming meteorologie-2015.csv to meteo-2015.csv"
+	@mv $(PROJECT_DIR)/data/raw/meteorologie-2015.csv $(PROJECT_DIR)/data/raw/meteo-2015.csv
 
 
 pred_maint_data:
