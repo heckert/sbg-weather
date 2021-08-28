@@ -218,12 +218,12 @@ class WindowGenerator:
             (inputs, embeddings), labels = self.example
         else:
             inputs, labels = self.example
-        plt.figure(figsize=(12, 8))
+        plt.figure(figsize=(9, 6))
         plot_col_index = self.column_indices[plot_col]
         max_n = min(max_subplots, len(inputs))
         for n in range(max_n):
             plt.subplot(max_n, 1, n+1)
-            plt.ylabel(plot_col)
+            plt.ylabel(plot_col.split(' ')[0])
             plt.plot(self.input_indices, inputs[n, :, plot_col_index],
                     label='Inputs', marker='.', zorder=-10)
 
