@@ -79,11 +79,12 @@ class SplitScaler:
 
                 # fit scaler only on training data
                 if ds_type == 'train':
-                        scaler = StandardScaler()
-                        scaler = scaler.fit(df_loc)
-
-                        # Keep scaler per location
-                        self.scalers[location] = scaler
+                    scaler = StandardScaler()
+                    scaler = scaler.fit(df_loc)
+                    # Keep scaler per location
+                    self.scalers[location] = scaler
+                else:
+                    scaler = self.scalers[location]
                     
                 scaled_data = scaler.transform(df_loc)
 
@@ -197,18 +198,13 @@ class WindowGenerator:
         dataset = files.interleave(lambda file: \
             tf.data.TextLineDataset(file).skip(1) \
                 .map(self._preprocess) \
-                .window(self.total_window_size, shift=int(self.total_window_size/2), drop_remainder=True) \
+                .window(self.total_window_size, shift=3, drop_remainder=True) \
                 .flat_map(self._create_window) \
                 .map(self._split_xy) \
                 .shuffle(200) \
                 .batch(self.batch_size) \
                 .prefetch(tf.data.AUTOTUNE),
-            num_parallel_calls=1)
-
-        # Shuffle before batching
-        #dataset = dataset.shuffle(300) \
-        #    .batch(self.batch_size) \
-        #    .prefetch(tf.data.AUTOTUNE)
+            num_parallel_calls=len(self.train_files))
 
         return dataset
 
@@ -223,7 +219,7 @@ class WindowGenerator:
         max_n = min(max_subplots, len(inputs))
         for n in range(max_n):
             plt.subplot(max_n, 1, n+1)
-            plt.ylabel(plot_col.split(' ')[0])
+            plt.ylabel(plot_col.split(' ')[0]+'\n[normed]')
             plt.plot(self.input_indices, inputs[n, :, plot_col_index],
                     label='Inputs', marker='.', zorder=-10)
 
@@ -270,6 +266,6 @@ class WindowGenerator:
         if result is None:
             # No example batch was found, so get one from the `.test` dataset
             result = next(iter(self.test))
-        # And cache it for next time
-        # self._example = result
+            # And cache it for next time
+            # self._example = result
         return result

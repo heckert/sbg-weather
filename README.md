@@ -2,7 +2,7 @@
 
 > **NOTE:**  _Currently still work in progress_
 
-Exploring various time-series deep learning methods on weather data for the city of Salzburg, Austria using TensorFlow and Keras.
+Exploring various time-series deep learning methods on weather data for the province of Salzburg, Austria using TensorFlow and Keras.
 
 Data is taken from Austria's [open government data platform](https://www.data.gv.at/).
 
@@ -20,7 +20,7 @@ This project assumes that a conda installation is available.
 ### 2. Load the data
     make sbg_data
     
-loads datasets for the years 2016-2019 to `data/raw`.
+loads datasets for the years 2011-2019 to `data/raw`.
 
 ### 3. Data preparation and feature engineering
 

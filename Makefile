@@ -24,11 +24,13 @@ sbg_data:
 	@rm $(PROJECT_DIR)/data/raw/*.zip
 	@echo "Successfully loaded and unzipped SBG weather data"
 
+# data for 2011-2013 is split into two csvs, 
+# e.g. meteo-2011-1.csv & meteo-2011-2.csv
 	@echo "Concatenating files for 2011-13"
 	@for year in {2011..2013} ; do \
 	touch $(PROJECT_DIR)/data/raw/meteo-$$year.csv; \
 	for part in 1 2 ; do \
-	cat $(PROJECT_DIR)/data/raw/meteo-$$year-$$part.csv >>  $(PROJECT_DIR)/data/raw/meteo-$$year.csv ; \
+	cat $(PROJECT_DIR)/data/raw/meteo-$$year-$$part.csv >> $(PROJECT_DIR)/data/raw/meteo-$$year.csv ; \
 	rm $(PROJECT_DIR)/data/raw/meteo-$$year-$$part.csv ; \
 	done; done
 
