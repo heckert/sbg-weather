@@ -28,7 +28,13 @@ This is currently handled in the notebook `01-explore&prep.ipynb` in the noteboo
 The files are written to seperate `train`, `val` and `test` folders within `data/processed`.
 
 ### 4. Model training
-A first example of training an LSTM model is provided in the notebook `02-train.ipynb`.
+A first example of training an LSTM model is provided in the notebook `02-train.ipynb`.  
+#### Current model architecture
+![Model architecture](plots/forecast_model_architecture.png)
+
+#### Model output  
+![Results](plots/forecast_output.png)
+
 
 ## Sources
 * TensorFlow's 
