@@ -20,11 +20,11 @@ This project assumes that a conda installation is available.
 ### 2. Load the data
     make sbg_data
     
-loads datasets for the years 2011-2019 to `data/raw`.
+loads datasets for 2011-2019 from the open government data website and stores it in the `data/raw` directory.
 
 ### 3. Data preparation and feature engineering
-This is currently handled in the notebook `01-explore&prep.ipynb` in the notebooks directory. The raw data is loaded, processed and eventually stored across several csv files.
-The files are written to seperate `train`, `val` and `test` folders within `data/processed`.
+This is currently handled in the file `01-explore&prep.ipynb` in the notebooks directory. The raw data is processed and eventually stored across several csv files.
+The processed datasets are written to seperate `train`, `val` and `test` folders within `data/processed`.
 
 ### 4. Model training
 A first example of training an LSTM model is provided in the notebook `02-train.ipynb`.  
