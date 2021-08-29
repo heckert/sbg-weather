@@ -24,7 +24,7 @@ loads datasets for 2011-2019 from the open government data website and stores it
 
 ### 3. Data preparation and feature engineering
 This is currently handled in the file `01-explore&prep.ipynb` in the notebooks directory. The raw data is processed and eventually stored across several csv files.
-The processed datasets are written to seperate `train`, `val` and `test` folders within `data/processed`.
+The datasets are written to seperate `train`, `val` and `test` folders within `data/processed`.
 
 ### 4. Model training
 A first example of training an LSTM model is provided in the notebook `02-train.ipynb`.  
