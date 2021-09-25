@@ -208,12 +208,19 @@ class WindowGenerator:
 
         return dataset
 
-    def plot(self, model=None, max_subplots=3):
+    def plot(self, model=None, max_subplots=3, rotate_examples=False):
         plot_col = self.label_columns[0]
-        if self.embedding_column is not None:
-            (inputs, embeddings), labels = self.example
+
+        if rotate_examples:
+            example = self.rotating_example
         else:
-            inputs, labels = self.example
+            example = self.example
+
+        if self.embedding_column is not None:
+            (inputs, embeddings), labels = example
+        else:
+            inputs, labels = example
+
         plt.figure(figsize=(9, 6))
         plot_col_index = self.column_indices[plot_col]
         max_n = min(max_subplots, len(inputs))
@@ -235,9 +242,9 @@ class WindowGenerator:
                      label='Labels', c='#2ca02c')
             if model is not None:
                 if self.embedding_column is not None:
-                    predictions = model((inputs, embeddings))
+                    predictions = model.predict((inputs, embeddings))
                 else:
-                    predictions = model(inputs)
+                    predictions = model.predict(inputs)
                 plt.scatter(self.label_indices, predictions[n, :, label_col_index],
                             marker='X', edgecolors='k', label='Predictions',
                             c='#ff7f0e', s=64)
@@ -267,5 +274,10 @@ class WindowGenerator:
             # No example batch was found, so get one from the `.test` dataset
             result = next(iter(self.test))
             # And cache it for next time
-            # self._example = result
+            self._example = result
+        return result
+
+    @property
+    def rotating_example(self):
+        result = next(iter(self.test))
         return result
