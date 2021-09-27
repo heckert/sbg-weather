@@ -3,9 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+import pathlib
 import tensorflow as tf
+from IPython.display import Image
 
 from sklearn.preprocessing import StandardScaler
+from tensorflow.keras import metrics
 
 def get_filenames_in_directory(path):
     f = []
@@ -281,3 +284,108 @@ class WindowGenerator:
     def rotating_example(self):
         result = next(iter(self.test))
         return result
+
+
+class ModelTrainer:
+    '''
+    Helper class for model compilation, visualization, 
+    training, evaluation and storing. 
+    '''
+    def __init__(
+        self,
+        model,
+        name=None,
+        train_dataset=None,
+        validation_dataset=None,
+        test_dataset=None, 
+        batch_size=32,
+        lr=1e-4, 
+        max_epochs=30,
+        patience=3,
+        metrics=None,
+        saved_model_dir=None,
+        vis_dir=None,
+        verbose=True
+    ):
+
+        self.model = model
+        self.model.compile(
+            loss=tf.losses.MeanSquaredError(),
+            optimizer=tf.optimizers.Adam(lr=lr),
+            metrics=metrics
+        )
+        self.name = name
+        self.train_dataset = train_dataset
+        self.validation_dataset = validation_dataset
+        self.test_dataset = test_dataset
+        self.batch_size = batch_size
+        # self.lr = lr
+        self.max_epochs = max_epochs
+        self.patience = patience
+        self.metrics = metrics
+        self.saved_model_dir = saved_model_dir
+        self.vis_dir = vis_dir
+        self.verbose = verbose
+
+        self.today = datetime.date.today().strftime('%Y-%m-%d')
+        self.name_to_save = self.name.lower()\
+                                     .replace(' ', '_')\
+                                     .replace('/', '') + '_' + self.today
+
+    def plot_model(self):
+        if self.vis_dir is not None:
+            to_file = self.vis_dir / f'{self.name_to_save}.png'
+
+            tf.keras.utils.plot_model(
+                self.model, to_file=to_file, show_shapes=True, 
+                show_layer_names=False, rankdir='TB', expand_nested=False, dpi=64
+            )
+
+            return Image(to_file)
+
+        else:
+            return ValueError('Parameter `vis_dir` not defined') 
+
+    def fit(self):
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+            monitor='val_loss', patience=self.patience,
+            mode='min', restore_best_weights=True
+        )
+
+        self.history = self.model.fit(
+            self.train_dataset, epochs=self.max_epochs,
+            validation_data=self.validation_dataset,
+            callbacks=[early_stopping], batch_size=self.batch_size,
+            verbose=self.verbose
+        )
+
+        if self.saved_model_dir is not None:
+            self.model.save(self.saved_model_dir / self.name_to_save)
+            print('Saved trained model at {}'.format(
+                self.saved_model_dir / self.name_to_save
+                )
+            )
+    
+    def plot_history(self):
+        if self.history is not None:
+            plt.plot(self.history.history["loss"])
+            plt.plot(self.history.history["val_loss"])
+            plt.legend(labels = ["loss", "validation loss"])
+            plt.xlabel("Epochs")
+            plt.ylabel("val_loss")
+            plt.title(f'{self.name} (MSE)')
+
+        else:
+            raise ValueError('No history to plot')
+
+    def evaluate(self):
+        return self.model.evaluate(
+            self.test_dataset, verbose=self.verbose
+        )
+
+
+
+
+    
+
+
