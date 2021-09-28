@@ -300,7 +300,6 @@ class ModelTrainer:
         test_dataset=None, 
         batch_size=32,
         lr=1e-4, 
-        max_epochs=30,
         patience=3,
         metrics=None,
         saved_model_dir=None,
@@ -320,7 +319,7 @@ class ModelTrainer:
         self.test_dataset = test_dataset
         self.batch_size = batch_size
         # self.lr = lr
-        self.max_epochs = max_epochs
+        # self.max_epochs = max_epochs
         self.patience = patience
         self.metrics = metrics
         self.saved_model_dir = saved_model_dir
@@ -344,16 +343,16 @@ class ModelTrainer:
             return Image(to_file)
 
         else:
-            return ValueError('Parameter `vis_dir` not defined') 
+            raise ValueError('Parameter `vis_dir` not defined') 
 
-    def fit(self):
+    def fit(self, max_epochs=30):
         early_stopping = tf.keras.callbacks.EarlyStopping(
             monitor='val_loss', patience=self.patience,
             mode='min', restore_best_weights=True
         )
 
         self.history = self.model.fit(
-            self.train_dataset, epochs=self.max_epochs,
+            self.train_dataset, epochs=max_epochs,
             validation_data=self.validation_dataset,
             callbacks=[early_stopping], batch_size=self.batch_size,
             verbose=self.verbose
@@ -362,7 +361,7 @@ class ModelTrainer:
         if self.saved_model_dir is not None:
             self.model.save(self.saved_model_dir / self.name_to_save)
             print('Saved trained model at {}'.format(
-                self.saved_model_dir / self.name_to_save
+                    self.saved_model_dir / self.name_to_save
                 )
             )
     
