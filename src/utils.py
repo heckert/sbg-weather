@@ -19,12 +19,26 @@ def get_filenames_in_directory(path):
     return f 
 
 class SplitScaler:
-    '''
-    Split df into train, validation & test data,
-    fit individual scalers for each location on train data,
-    and transform all dataframes accordingly
-    '''
-    def __init__(self, df:pd.DataFrame, train_val_ratios:tuple):
+    """Helper class to handle train-test splitting & location-wise scaling
+
+    Data is split and scaled upon initialization and can then be accessed
+    via the attributes `train`, `val` and `test`.
+
+    Parameters
+    ---------
+    df : pandas.DataFrame
+        Multiindexed DataFrame in which the 0th index level
+        represents the location at which the data are measured,
+        and the 1st level represents the time of measurement.
+
+    train_val_ratios : tuple
+        The ratios for training and validation dataset.
+        Ratio for the test dataset is calculated as
+        1 - (train ratio + validation ratio)
+
+    """
+    
+    def __init__(self, df: pd.DataFrame, train_val_ratios: tuple):
         self.df = df
         self.train_share, self.val_share = train_val_ratios
         self.unique_locations = df.index.get_level_values(0).unique()
@@ -50,11 +64,11 @@ class SplitScaler:
         self.val_slice = slice(val_range[0], val_range[-1])
         self.test_slice = slice(test_range[0], test_range[-1])
 
-        train_unsc = self.df.loc[pd.IndexSlice[:,self.train_slice],:].copy()
-        val_unsc = self.df.loc[pd.IndexSlice[:,self.val_slice],:].copy()
-        test_unsc = self.df.loc[pd.IndexSlice[:,self.test_slice],:].copy()
+        self.train_unsc = self.df.loc[pd.IndexSlice[:,self.train_slice],:].copy()
+        self.val_unsc = self.df.loc[pd.IndexSlice[:,self.val_slice],:].copy()
+        self.test_unsc = self.df.loc[pd.IndexSlice[:,self.test_slice],:].copy()
 
-        self.split_data_unsc = train_unsc, val_unsc, test_unsc
+        #self.split_data_unsc = train_unsc, val_unsc, test_unsc
 
     def plot(self):
         fig, ax = plt.subplots(figsize=(10,2))
@@ -71,12 +85,20 @@ class SplitScaler:
 
     def _scale(self):
         self.scalers = {}
-        ds_types = ('train', 'val', 'test')
-        containers = ([], [], [])  # empty arrays to store scaled dfs per location
+        ds_types = {
+            'train': [],
+            'val': [],
+            'test': []
+        }
 
-        for ds_type, df_unsc, container in zip(ds_types, self.split_data_unsc, containers):
+        # ds_types = ('train', 'val', 'test')
+        # containers = ([], [], [])  # empty arrays to store scaled dfs per location
+
+        # for ds_type, df_unsc, container in zip(ds_types, self.split_data_unsc, containers):
+        for ds_type, container in ds_types.items():
             for location in self.unique_locations:
                 # get data per location 
+                df_unsc = self.__getattribute__(f'{ds_type}_unsc')
                 df_loc = df_unsc.loc[location]
                 times = df_loc.index
 
@@ -91,7 +113,7 @@ class SplitScaler:
                     
                 scaled_data = scaler.transform(df_loc)
 
-                # Create MultiIndex from location and array of measurement times
+                # create MultiIndex from location and array of measurement times
                 index = pd.MultiIndex.from_product([[location], times], names=['Messort', 'Zeitpunkt'])
                 df_loc_sc = pd.DataFrame(scaled_data, index=index, columns=df_loc.columns)
 
@@ -112,12 +134,12 @@ class WindowGenerator:
                  label_columns=['Lufttemperatur [GradC]'],
                  embedding_column='Location'):
 
-        # Store data dirs.
+        # store data dirs
         self.train_dir = train_dir
         self.val_dir = val_dir
         self.test_dir = test_dir
 
-        # Read columns from first file in train_dir.
+        # read columns from first file in train_dir
         self.train_files = get_filenames_in_directory(train_dir)
 
         with open(train_dir/self.train_files[0]) as f:
@@ -125,7 +147,7 @@ class WindowGenerator:
                             .strip() \
                             .split(',')
 
-        # Work out the label column indices.
+        # work out the label column indices
         self.label_columns = label_columns
         if label_columns is not None:
             self.label_columns_indices = {name: i for i, name in
@@ -133,7 +155,7 @@ class WindowGenerator:
             self.column_indices = {name: i for i, name in
                                 enumerate(self.columns)}
 
-        # Work out embedding column index, if available.
+        # work out embedding column index, if available
         self.embedding_column = embedding_column
         if embedding_column is not None:
             self.embedding_index = self.columns.index(embedding_column)
@@ -142,7 +164,7 @@ class WindowGenerator:
 
         self.batch_size = batch_size
 
-        # Work out the window parameters.
+        # work out the window parameters
         self.input_width = input_width
         self.label_width = label_width
         if shift is None:
@@ -271,7 +293,8 @@ class WindowGenerator:
 
     @property
     def example(self):
-        """Get and cache an example batch of `inputs, labels` for plotting."""
+        """Get and cache an example batch of `inputs, labels` for plotting
+        """
         result = getattr(self, '_example', None)
         if result is None:
             # No example batch was found, so get one from the `.test` dataset
