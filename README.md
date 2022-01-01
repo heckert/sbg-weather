@@ -1,8 +1,7 @@
 # Salzburg Weather Data
 
-> **NOTE:**  _Currently still work in progress_
-
-Exploring various time-series deep learning methods on weather data for the province of Salzburg, Austria using TensorFlow and Keras.
+Using LSTM to predict temperature based on multivariate time series data for the province of Salzburg, Austria.
+Implemented in TensorFlow.
 
 Data is taken from Austria's [open government data platform](https://www.data.gv.at/).
 
