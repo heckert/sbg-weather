@@ -1,6 +1,6 @@
 # Salzburg Weather Forecast
 
-Using LSTM to predict temperature for the province of Salzburg, Austria.
+Using LSTM to forcast temperature based on multivariate input data.
 Implemented in TensorFlow.
 
 Data is taken from Austria's [open government data platform](https://www.data.gv.at/).
